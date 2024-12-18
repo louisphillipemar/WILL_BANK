@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Système Bancaire</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #2b2b2b;
+            color: white;
+            text-align: center;
+            margin: 0;
+        }
+        h1 {
+            margin-top: 20px;
+            font-size: 24px;
+        }
+        .container {
+            width: 300px;
+            margin: 50px auto;
+            background-color: #444;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px #000;
+        }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 5px;
+        }
+        input {
+            background-color: #555;
+            color: white;
+        }
+        button {
+            background-color: #3a7bd5;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #2e5b9b;
+        }
+        #message {
+            color: lightgreen;
+        }
+    </style>
+</head>
+<body>
+    <h1>Bienvenue dans le Système Bancaire</h1>
+    <div class="container" id="welcome-screen">
+        <button onclick="showCreateAccount()">Créer un compte</button>
+        <button onclick="showLogin()">Se connecter</button>
+    </div>
+
+    <div class="container" id="create-account-screen" style="display:none;">
+        <h2>Créer un Compte</h2>
+        <input type="text" id="new-username" placeholder="Nom d'utilisateur">
+        <input type="password" id="new-password" placeholder="Mot de passe">
+        <input type="number" id="initial-balance" placeholder="Solde initial">
+        <button onclick="createAccount()">Créer</button>
+        <p id="create-message"></p>
+    </div>
+
+    <div class="container" id="login-screen" style="display:none;">
+        <h2>Se Connecter</h2>
+        <input type="text" id="login-username" placeholder="Nom d'utilisateur">
+        <input type="password" id="login-password" placeholder="Mot de passe">
+        <button onclick="login()">Connexion</button>
+        <p id="login-message"></p>
+    </div>
+
+    <div class="container" id="dashboard" style="display:none;">
+        <h2>Tableau de Bord</h2>
+        <p id="balance"></p>
+        <button onclick="deposit()">Déposer</button>
+        <button onclick="withdraw()">Retirer</button>
+    </div>
+
+    <script>
+        // Charger les comptes depuis le stockage local
+        let accounts = JSON.parse(localStorage.getItem("accounts")) || {};
+
+        function saveAccountsToLocalStorage() {
+            localStorage.setItem("accounts", JSON.stringify(accounts));
+        }
+
+        function showCreateAccount() {
+            document.getElementById("welcome-screen").style.display = "none";
+            document.getElementById("create-account-screen").style.display = "block";
+        }
+
+        function showLogin() {
+            document.getElementById("welcome-screen").style.display = "none";
+            document.getElementById("login-screen").style.display = "block";
+        }
+
+        function createAccount() {
+            const username = document.getElementById("new-username").value;
+            const password = document.getElementById("new-password").value;
+            const balance = parseFloat(document.getElementById("initial-balance").value);
+
+            if (accounts[username]) {
+                document.getElementById("create-message").innerText = "Ce compte existe déjà !";
+            } else if (isNaN(balance)) {
+                document.getElementById("create-message").innerText = "Solde initial invalide.";
+            } else {
+                accounts[username] = { password: password, balance: balance };
+                saveAccountsToLocalStorage(); // Sauvegarder les comptes
+                document.getElementById("create-message").innerText = "Compte créé avec succès !";
+                setTimeout(() => location.reload(), 2000);
+            }
+        }
+
+        function login() {
+            const username = document.getElementById("login-username").value;
+            const password = document.getElementById("login-password").value;
+
+            if (accounts[username] && accounts[username].password === password) {
+                document.getElementById("login-screen").style.display = "none";
+                document.getElementById("dashboard").style.display = "block";
+                updateBalance(username);
+                sessionStorage.setItem("currentUser", username); // Sauvegarder l'utilisateur connecté
+            } else {
+                document.getElementById("login-message").innerText = "Nom d'utilisateur ou mot de passe incorrect.";
+            }
+        }
+
+        function updateBalance(username) {
+            document.getElementById("balance").innerText = `Solde actuel : ${accounts[username].balance} €`;
+        }
+
+        function deposit() {
+            const username = sessionStorage.getItem("currentUser");
+            const amount = parseFloat(prompt("Montant à déposer :"));
+            if (!isNaN(amount) && amount > 0) {
+                accounts[username].balance += amount;
+                saveAccountsToLocalStorage(); // Mettre à jour le stockage local
+                updateBalance(username);
+            } else {
+                alert("Montant invalide.");
+            }
+        }
+
+        function withdraw() {
+            const username = sessionStorage.getItem("currentUser");
+            const amount = parseFloat(prompt("Montant à retirer :"));
+            if (!isNaN(amount) && amount > 0 && accounts[username].balance >= amount) {
+                accounts[username].balance -= amount;
+                saveAccountsToLocalStorage(); // Mettre à jour le stockage local
+                updateBalance(username);
+            } else {
+                alert("Montant invalide ou solde insuffisant.");
+            }
+        }
+    </script>
+</body>
+</html>
